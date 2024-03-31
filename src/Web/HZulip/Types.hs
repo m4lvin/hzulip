@@ -62,7 +62,7 @@ data Message = Message { messageId               :: Int
                        , messageType             :: Text
                        , messageContent          :: Text
 
-                       , messageAvatarUrl        :: Text
+                       , messageAvatarUrl        :: Maybe Text
                        , messageTimestamp        :: Int
 
                        -- See the comment on the `FromJSON Message` instance.
@@ -72,21 +72,21 @@ data Message = Message { messageId               :: Int
 
                        , messageRecipientId      :: Int
                        , messageClient           :: Text
-                       , messageSubjectLinks     :: [Text]
+
+                       -- FIXME: since feature level 46 this should be list of dictionaries rathern than a list of strings.
+                       , messageTopicLinks       :: [Text]
+
                        , messageSubject          :: Text
                        }
   deriving (Eq, Ord, Show)
 
 -- |
 -- Represents the current user's profile
-data Profile = Profile { profileClientId    :: Text
-                       , profileEmail       :: Text
+data Profile = Profile { profileEmail       :: Text
                        , profileFullName    :: Text
                        , profileIsAdmin     :: Bool
                        , profileIsBot       :: Bool
                        , profileMaxMessagId :: Int
-                       , profilePointer     :: Int
-                       , profileShortName   :: Text
                        , profileUserId      :: Int
                        }
   deriving (Eq, Ord, Show)
@@ -99,7 +99,6 @@ data User = User { userId        :: Int
                  , userEmail     :: Text
                  , userRealm     :: Maybe Text
                  -- ^ `display_recipient` doesn't have this, `message_sender` does
-                 , userShortName :: Text
                  }
   deriving (Eq, Ord, Show)
 
@@ -157,26 +156,22 @@ instance FromJSON Message where
                              o .: "sender_email"      <*>
                              -- sender_realm_str was sender_domain in Zulip < 1.6,
                              -- see https://github.com/zulip/zulip/commit/b416587aabec1e4ccf679652b7f3d61a6788317a
-                             o .:? "sender_realm_str" <*>
-                             o .: "sender_short_name"
+                             o .:? "sender_realm_str"
                            ) <*>
 
                            o .: "recipient_id"      <*>
                            o .: "client"            <*>
-                           o .: "subject_links"     <*>
+                           o .: "topic_links"     <*>
                            o .: "subject"
     parseJSON _ = mzero
 
 instance FromJSON Profile where
     parseJSON (Object o) = Profile <$>
-                           o .: "client_id"      <*>
                            o .: "email"          <*>
                            o .: "full_name"      <*>
                            o .: "is_admin"       <*>
                            o .: "is_bot"         <*>
                            o .: "max_message_id" <*>
-                           o .: "pointer"        <*>
-                           o .: "short_name"     <*>
                            o .: "user_id"
     parseJSON _ = mzero
 
@@ -185,8 +180,7 @@ instance FromJSON User where
                            o .: "id" <*>
                            o .: "full_name"  <*>
                            o .: "email"      <*>
-                           pure Nothing      <*>
-                           o .: "short_name"
+                           pure Nothing
     parseJSON _ = mzero
 
 parseDisplayRecipient :: Value -> Parser (Either Text [User])
