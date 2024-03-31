@@ -36,7 +36,7 @@ executable zulip-logger
 executable zulip-cli
   main-is:             ZulipCli.hs
   build-depends:       base >=4 && <5
-                     , ansi-terminal >=0.6 && <0.9
+                     , ansi-terminal >=0.6 && <0.12
                      , split >=0.2 && <1
                      , lifted-async >=0.2
                      , lifted-base
